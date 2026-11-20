@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Programação da Imersão</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#0a0a0a; --surface:#161616; --surface2:#1f1f1f; --line:#2e2e2e;
+  --text:#f3f3f3; --muted:#a8a8a8; --orange:#ff6a00; --orange2:#ff9a3d; --on-orange:#0a0a0a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0a0a0a; --surface:#161616; }
+}
+:root[data-theme="dark"]{ --bg:#0a0a0a; --surface:#161616; }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding:28px 16px 56px}
+header{border-left:6px solid var(--orange);padding:4px 0 4px 16px;margin-bottom:22px}
+h1{margin:0;font-size:clamp(1.7rem,6vw,2.5rem);line-height:1.1;color:var(--orange)}
+header p{margin:6px 0 0;color:var(--muted)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+button{font:inherit;cursor:pointer;border:1px solid var(--orange);background:transparent;color:var(--orange);padding:9px 14px;border-radius:8px;min-height:44px}
+button:hover{background:var(--orange);color:var(--on-orange)}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid var(--orange2);outline-offset:2px}
+.search{flex:1 1 200px;min-height:44px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit}
+details{border-radius:12px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;overflow:hidden}
+.day>summary{background:var(--orange);color:var(--on-orange);font-weight:700;font-size:1.15rem;padding:16px 18px}
+.day>summary .sub{font-weight:500;opacity:.8;font-size:.9rem;margin-left:8px}
+summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;min-height:48px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"";margin-left:auto;width:9px;height:9px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;transform:rotate(45deg);transition:transform .2s;flex:none}
+details[open]>summary::after{transform:rotate(-135deg)}
+.slots{padding:10px}
+.slot{background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:8px;margin:8px 0}
+.slot>summary{padding:12px 14px;flex-wrap:wrap}
+.time{color:var(--orange);font-weight:700;white-space:nowrap}
+.title{font-weight:600}
+.body{padding:2px 14px 14px 14px;color:var(--muted)}
+.body dt{color:var(--orange2);font-size:.85rem;margin-top:8px}
+.body dd{margin:2px 0 0;color:var(--text)}
+.hide{display:none}
+.empty{color:var(--muted);text-align:center;padding:20px}
+@media (max-width:480px){.day>summary .sub{display:block;margin:0}}
+@media (prefers-reduced-motion:reduce){summary::after{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Programação da Imersão</h1>
+    <p>Toque em um dia e depois em um horário para ver os detalhes.</p>
+  </header>
+  <div class="tools">
+    <button id="open">Abrir tudo</button>
+    <button id="close">Fechar tudo</button>
+    <input class="search" id="q" type="search" placeholder="Buscar por atividade ou nome" aria-label="Buscar">
+  </div>
+  <main id="app"></main>
+  <p class="empty hide" id="none">Nenhuma atividade encontrada.</p>
+</div>
+<script>
+var DATA=[
+ {dia:"Dia 1",nome:"Sexta",slots:[
+  {h:"14h - 15h",t:"Chegada dos juniores"},
+  {h:"15h - 16h",t:"Início"},
+  {h:"16h - 19h",t:"Dinâmica de Operações"},
+  {h:"20h - 22h",t:"Jantar: Macarrão com Frango",r:["Responsável","Pablo e Guilherme"]},
+  {h:"22h",t:"Integração"}
+ ]},
+ {dia:"Dia 2",nome:"Sábado",slots:[
+  {h:"16h - 17h30",t:"Momento legado",r:["Responsável pela pauta","Eduardo Obscuro"]},
+  {h:"17h30 - 18h30",t:"Lanche",r:["Responsável","João Igor, Breno e Bernardo"]},
+  {h:"18h30 - 20h",t:"Momento CASE",r:["Responsável pela pauta","Feijó, Cayo, Hugo"]},
+  {h:"20h - 22h",t:"Jantar: Cachorro quente",r:["Responsável","João Igor, Breno e Bernardo"]},
+  {h:"22h - 2h",t:"Integration"}
+ ]},
+ {dia:"Dia 3",nome:"Domingo",slots:[
+  {h:"8h - 9h",t:"Café da manhã"},
+  {h:"9h - 10:30h",t:"Momento do Vivi",r:["Responsável pela pauta","Vivi"]},
+  {h:"10:30h - 12h",t:"Momento marca",r:["Responsável pela pauta","João Siqueira e Filipe"]},
+  {h:"12h - 13h",t:"Almoço: Escondidinho de frango",r:["Responsável","Leonardo"]},
+  {h:"13h - 14h30",t:"Momento membresia",r:["Responsável pela pauta","Leonardo, Baldit e Akira"]},
+  {h:"14h30 - 15:30h",t:"Pauta final",r:["Responsável","Ana e Caio"]},
+  {h:"15:30h - 16h",t:"Agradecimentos",r:["Responsável","Ana e Gui"]},
+  {h:"16h - 17h",t:"Fim da imersão e check out"}
+ ]}
+];
+var app=document.getElementById("app");
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+app.innerHTML=DATA.map(function(d,i){
+  return '<details class="day" '+(i===0?'open':'')+'><summary>'+esc(d.dia)+'<span class="sub">'+esc(d.nome)+'</span></summary><div class="slots">'+
+  d.slots.map(function(s){
+    var body=s.r?'<dl class="body"><dt>'+esc(s.r[0])+'</dt><dd>'+esc(s.r[1])+'</dd></dl>':'<div class="body">Sem responsável definido.</div>';
+    return '<details class="slot"><summary><span class="time">'+esc(s.h)+'</span><span class="title">'+esc(s.t)+'</span></summary>'+body+'</details>';
+  }).join('')+'</div></details>';
+}).join('');
+document.getElementById("open").onclick=function(){app.querySelectorAll("details").forEach(function(d){d.open=true})};
+document.getElementById("close").onclick=function(){app.querySelectorAll("details").forEach(function(d){d.open=false})};
+document.getElementById("q").oninput=function(e){
+  var v=e.target.value.trim().toLowerCase(),any=false;
+  app.querySelectorAll(".day").forEach(function(day){
+    var shown=0;
+    day.querySelectorAll(".slot").forEach(function(s){
+      var m=!v||s.textContent.toLowerCase().indexOf(v)>-1;
+      s.classList.toggle("hide",!m); if(m)shown++;
+    });
+    day.classList.toggle("hide",shown===0);
+    if(v&&shown){day.open=true}
+    if(shown)any=true;
+  });
+  document.getElementById("none").classList.toggle("hide",any);
+};
+</script>
+</body>
+</html>
